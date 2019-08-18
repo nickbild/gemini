@@ -3,6 +3,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.autograd import Variable
+from lookups import lookup
+from lookups import lookup_reverse
+
 
 class Net(nn.Sequential):
     def __init__(self):
@@ -66,8 +69,14 @@ def train(num_epochs):
         # images = torch.FloatTensor([6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6])
         # labels = torch.FloatTensor([7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9])
 
-        images = torch.FloatTensor([[1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1],[6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6]])
-        labels = torch.FloatTensor([[2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],[7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9]])
+        #images = torch.FloatTensor([[1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1],[6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6]])
+        #labels = torch.FloatTensor([[2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],[7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9]])
+
+        inp = "this is a test..aabc"
+        targ = "c72bd8e501effc3679f403da1534b297"
+
+        images = encode_string(inp)
+        labels = encode_string(targ)
 
         # Clear all accumulated gradients.
         optimizer.zero_grad()
@@ -75,8 +84,11 @@ def train(num_epochs):
         # Predict classes using images from the training set.
         outputs = model(images)
 
-        print(outputs)
-        print(labels)
+        print(decode_tensor(outputs))
+        #print(encode_string(outputs.data[0]))
+
+        # print(outputs)
+        # print(labels)
 
         # Compute the loss based on the predictions and actual labels
         loss = loss_fn(outputs, labels)
@@ -115,6 +127,27 @@ def train(num_epochs):
 
         # Print metrics for epoch.
         #print("Epoch {}, Train Accuracy: {} , TrainLoss: {} , Test Accuracy: {}".format(epoch, train_acc, train_loss)) #, test_acc))
+
+
+def encode_string(str):
+    result = []
+    for chr in str:
+        result.append(lookup[chr])
+
+    result = torch.FloatTensor(result)
+
+    return result
+
+
+def decode_tensor(tensor):
+    result = ""
+    for chr in tensor.tolist():
+        try:
+            result += lookup_reverse[round(chr)]
+        except KeyError as e:
+            result += ""
+
+    return result
 
 
 if __name__ == "__main__":
