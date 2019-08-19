@@ -8,14 +8,16 @@ from lookups import lookup_reverse
 import math
 
 
-num_train = 100
+num_train_cases = 100
+batch_size = 32
+num_batches = int(math.ceil(num_train_cases / batch_size))
 
 
 class Net(nn.Sequential):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(in_features=20, out_features=512)
+        self.fc1 = nn.Linear(in_features=10, out_features=512)
         self.relu1 = nn.LeakyReLU()
 
         self.fc2 = nn.Linear(in_features=512, out_features=1024)
@@ -84,8 +86,6 @@ def train(num_epochs):
 
         #images = torch.FloatTensor([[1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1],[6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6]])
         #labels = torch.FloatTensor([[2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],[7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9]])
-        batch_size = 32
-        num_batches = int(math.ceil(num_train / batch_size))
 
         for batch_num in range(1,num_batches+1):
             range_end = int(batch_num * batch_size) - 1
@@ -96,6 +96,10 @@ def train(num_epochs):
 
             inp = torch.FloatTensor(inp)
             targ = torch.FloatTensor(targ)
+
+            if cuda_avail:
+                inp = Variable(inp.cuda())
+                targ = Variable(targ.cuda())
 
             # inp = "this is a test..aabc"
             # targ = "c72bd8e501effc3679f403da1534b297"
@@ -208,4 +212,4 @@ if __name__ == "__main__":
     train_input, train_solutions = load_data_file("data/train/input_pairs.txt")
 
     print("Starting training.")
-    train(500)
+    train(10000000)
