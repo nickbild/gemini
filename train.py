@@ -5,28 +5,38 @@ from torch.optim import Adam
 from torch.autograd import Variable
 from lookups import lookup
 from lookups import lookup_reverse
+import math
+
+
+num_train = 100
 
 
 class Net(nn.Sequential):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(in_features=20, out_features=256)
+        self.fc1 = nn.Linear(in_features=20, out_features=512)
         self.relu1 = nn.LeakyReLU()
 
-        self.fc2 = nn.Linear(in_features=256, out_features=512)
+        self.fc2 = nn.Linear(in_features=512, out_features=1024)
         self.relu2 = nn.LeakyReLU()
 
-        self.fc3 = nn.Linear(in_features=512, out_features=1024)
+        self.fc3 = nn.Linear(in_features=1024, out_features=1024)
         self.relu3 = nn.LeakyReLU()
 
         self.fc4 = nn.Linear(in_features=1024, out_features=1024)
         self.relu4 = nn.LeakyReLU()
 
-        self.fc5 = nn.Linear(in_features=1024, out_features=512)
+        self.fc5 = nn.Linear(in_features=1024, out_features=2048)
         self.relu5 = nn.LeakyReLU()
 
-        self.fc6 = nn.Linear(in_features=512, out_features=32)
+        self.fc6 = nn.Linear(in_features=2048, out_features=4096)
+        self.relu6 = nn.LeakyReLU()
+
+        self.fc7 = nn.Linear(in_features=4096, out_features=1024)
+        self.relu7 = nn.LeakyReLU()
+
+        self.fc8 = nn.Linear(in_features=1024, out_features=32)
 
     def forward(self, input):
         output = self.fc1(input)
@@ -45,6 +55,12 @@ class Net(nn.Sequential):
         output = self.relu5(output)
 
         output = self.fc6(output)
+        output = self.relu6(output)
+
+        output = self.fc7(output)
+        output = self.relu7(output)
+
+        output = self.fc8(output)
 
         return output
 
@@ -63,55 +79,59 @@ def train(num_epochs):
         #         images = Variable(images.cuda())
         #         labels = Variable(labels.cuda())
 
-        # images = torch.FloatTensor([1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1])
-        # labels = torch.FloatTensor([2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3])
-
         # images = torch.FloatTensor([6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6])
         # labels = torch.FloatTensor([7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9])
 
         #images = torch.FloatTensor([[1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1],[6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6]])
         #labels = torch.FloatTensor([[2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],[7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9]])
+        batch_size = 32
+        num_batches = int(math.ceil(num_train / batch_size))
 
-        inp = "this is a test..aabc"
-        targ = "c72bd8e501effc3679f403da1534b297"
+        for batch_num in range(1,num_batches+1):
+            range_end = int(batch_num * batch_size) - 1
+            range_start = range_end - batch_size + 1
 
-        images = encode_string(inp)
-        labels = encode_string(targ)
+            inp = train_input[range_start:range_end+1]
+            targ = train_solutions[range_start:range_end+1]
 
-        # Clear all accumulated gradients.
-        optimizer.zero_grad()
+            inp = torch.FloatTensor(inp)
+            targ = torch.FloatTensor(targ)
 
-        # Predict classes using images from the training set.
-        outputs = model(images)
+            # inp = "this is a test..aabc"
+            # targ = "c72bd8e501effc3679f403da1534b297"
 
-        print(decode_tensor(outputs))
-        #print(encode_string(outputs.data[0]))
+            # images = encode_string(inp)
+            # labels = encode_string(targ)
 
-        # print(outputs)
-        # print(labels)
+            # Clear all accumulated gradients.
+            optimizer.zero_grad()
 
-        # Compute the loss based on the predictions and actual labels
-        loss = loss_fn(outputs, labels)
+            # Predict classes using images from the training set.
+            outputs = model(inp)
 
-        # Backpropagate the loss
-        loss.backward()
+            # Compute the loss based on the predictions and actual labels
+            loss = loss_fn(outputs, targ)
 
-        # Adjust parameters according to the computed gradients
-        optimizer.step()
+            # Backpropagate the loss
+            loss.backward()
 
-        train_loss += loss.cpu().data * images.size(0)
+            # Adjust parameters according to the computed gradients
+            optimizer.step()
 
-        #print(outputs.data)
+            # print(outputs)
+            # print(targ)
 
-        print(epoch)
+            train_acc += calculate_accuracy(outputs, targ)
+            train_loss += loss.cpu().data * inp.size(0)
+
+
+
+
+
 
         if epoch == (num_epochs-1):
             torch.save(model.state_dict(), "md5_{}.model".format(epoch))
             print("Model saved.")
-        #_, prediction = torch.max(outputs.data, 1)
-        #train_acc += torch.sum(prediction == labels.data)
-
-
 
         # Call the learning rate adjustment function
         # adjust_learning_rate(epoch)
@@ -126,7 +146,7 @@ def train(num_epochs):
         #     best_acc_train = train_acc
 
         # Print metrics for epoch.
-        #print("Epoch {}, Train Accuracy: {} , TrainLoss: {} , Test Accuracy: {}".format(epoch, train_acc, train_loss)) #, test_acc))
+        print("Epoch {}, Train Accuracy: {}, TrainLoss: {}".format(epoch, train_acc, train_loss)) #, test_acc))
 
 
 def encode_string(str):
@@ -134,20 +154,44 @@ def encode_string(str):
     for chr in str:
         result.append(lookup[chr])
 
-    result = torch.FloatTensor(result)
+    #result = torch.FloatTensor(result)
 
     return result
 
 
 def decode_tensor(tensor):
     result = ""
-    for chr in tensor.tolist():
-        try:
-            result += lookup_reverse[round(chr)]
-        except KeyError as e:
-            result += ""
+    for t in tensor:
+        for chr in t.tolist():
+            try:
+                result += lookup_reverse[round(chr)]
+            except KeyError as e:
+                result += " "
 
     return result
+
+
+def calculate_accuracy(output, target):
+    total = 0
+    match = 0
+    for r in range(output.shape[0]):
+        for c in range(32):
+            total += 1
+            if round(output[r][c].item()) == target[r][c].item():
+                match += 1
+
+    return (match  / total) * 100
+
+
+def load_data_file(file):
+    input = []
+    output = []
+    for line in open(file):
+        line = line.rstrip('\n')
+        input.append(encode_string(line.split("\t")[0]))
+        output.append(encode_string(line.split("\t")[1]))
+
+    return input, output
 
 
 if __name__ == "__main__":
@@ -160,6 +204,8 @@ if __name__ == "__main__":
 
     optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.0001)
     loss_fn = nn.MSELoss()
+
+    train_input, train_solutions = load_data_file("data/train/input_pairs.txt")
 
     print("Starting training.")
     train(500)
