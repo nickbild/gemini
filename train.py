@@ -9,8 +9,12 @@ import math
 
 
 num_train_cases = 100
-batch_size = 32
+batch_size = 25 # Divisible by num_train_cases.
 num_batches = int(math.ceil(num_train_cases / batch_size))
+
+num_test_cases = 50
+batch_size_test = 25 # Divisible by num_train_cases.
+num_batches_test = int(math.ceil(num_test_cases / batch_size_test))
 
 
 class Net(nn.Sequential):
@@ -67,54 +71,48 @@ class Net(nn.Sequential):
         return output
 
 
+def test():
+    test_acc = 0.0
+
+    for batch_num in range(1,num_batches_test+1):
+        range_end = int(batch_num * batch_size_test) - 1
+        range_start = range_end - batch_size_test + 1
+        range_len = range_end - range_start + 1
+
+        input = test_input.narrow(0, range_start, range_len)
+        target = test_solutions.narrow(0, range_start, range_len)
+
+        output = model(input)
+
+        test_acc += calculate_accuracy(output, target)
+
+    return test_acc
+
+
 def train(num_epochs):
     model.train()
     best_acc = 0.0
-    best_acc_train = 0.0
 
     for epoch in range(num_epochs):
         train_acc = 0.0
         train_loss = 0.0
 
-        # for i, (images, labels) in enumerate(train_loader):
-        #     if cuda_avail:
-        #         images = Variable(images.cuda())
-        #         labels = Variable(labels.cuda())
-
-        # images = torch.FloatTensor([6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6])
-        # labels = torch.FloatTensor([7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9])
-
-        #images = torch.FloatTensor([[1,2,3,5,1,4,2,1,43,344,1,2,4,5,1,2,4,2,4,1],[6,7,8,6,8,65,7,8,9,0,6,5,4,6,7,8,9,8,7,6]])
-        #labels = torch.FloatTensor([[2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],[7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9]])
-
         for batch_num in range(1,num_batches+1):
             range_end = int(batch_num * batch_size) - 1
             range_start = range_end - batch_size + 1
+            range_len = range_end - range_start + 1
 
-            inp = train_input[range_start:range_end+1]
-            targ = train_solutions[range_start:range_end+1]
-
-            inp = torch.FloatTensor(inp)
-            targ = torch.FloatTensor(targ)
-
-            if cuda_avail:
-                inp = Variable(inp.cuda())
-                targ = Variable(targ.cuda())
-
-            # inp = "this is a test..aabc"
-            # targ = "c72bd8e501effc3679f403da1534b297"
-
-            # images = encode_string(inp)
-            # labels = encode_string(targ)
+            input = train_input.narrow(0, range_start, range_len)
+            target = train_solutions.narrow(0, range_start, range_len)
 
             # Clear all accumulated gradients.
             optimizer.zero_grad()
 
             # Predict classes using images from the training set.
-            outputs = model(inp)
+            output = model(input)
 
             # Compute the loss based on the predictions and actual labels
-            loss = loss_fn(outputs, targ)
+            loss = loss_fn(output, target)
 
             # Backpropagate the loss
             loss.backward()
@@ -122,35 +120,26 @@ def train(num_epochs):
             # Adjust parameters according to the computed gradients
             optimizer.step()
 
-            # print(outputs)
-            # print(targ)
-
-            train_acc += calculate_accuracy(outputs, targ)
-            train_loss += loss.cpu().data * inp.size(0)
+            train_acc += calculate_accuracy(output, target)
+            train_loss += loss.cpu().data * input.size(0)
 
 
-
-
-
-
-        if epoch == (num_epochs-1):
-            torch.save(model.state_dict(), "md5_{}.model".format(epoch))
-            print("Model saved.")
 
         # Call the learning rate adjustment function
         # adjust_learning_rate(epoch)
 
         # Evaluate on the test set
-        #test_acc = test()
+        test_acc = test()
+        test_acc_pct = (test_acc / (num_test_cases * 32)) * 100
 
         # Save the model if the test acc is greater than our current best
-        # if test_acc >= best_acc or train_acc >= best_acc_train:
-        #     save_models(epoch, train_acc, test_acc)
-        #     best_acc = test_acc
-        #     best_acc_train = train_acc
+        if test_acc_pct >= best_acc:
+            torch.save(model.state_dict(), "md5_{}_{}.model".format(epoch, test_acc_pct))
+            best_acc = test_acc_pct
 
         # Print metrics for epoch.
-        print("Epoch {}, Train Accuracy: {}, TrainLoss: {}".format(epoch, train_acc, train_loss)) #, test_acc))
+        train_acc_pct = (train_acc / (num_train_cases * 32)) * 100
+        print("Epoch: {}, Train Accuracy: {}, Train Loss: {}, Test Accuracy: {}".format(epoch, train_acc_pct, train_loss, test_acc_pct))
 
 
 def encode_string(str):
@@ -176,24 +165,30 @@ def decode_tensor(tensor):
 
 
 def calculate_accuracy(output, target):
-    total = 0
     match = 0
     for r in range(output.shape[0]):
         for c in range(32):
-            total += 1
             if round(output[r][c].item()) == target[r][c].item():
                 match += 1
 
-    return (match  / total) * 100
+    return match
 
 
-def load_data_file(file):
+def load_data_file_to_tensor(file):
     input = []
     output = []
     for line in open(file):
         line = line.rstrip('\n')
         input.append(encode_string(line.split("\t")[0]))
         output.append(encode_string(line.split("\t")[1]))
+
+    input = torch.FloatTensor(input)
+    output = torch.FloatTensor(output)
+
+    if cuda_avail:
+        print("Transferring data to GPU...")
+        input = Variable(input.cuda())
+        output = Variable(output.cuda())
 
     return input, output
 
@@ -204,12 +199,14 @@ if __name__ == "__main__":
     model = Net()
 
     if cuda_avail:
+        print("Transferring model to GPU...")
         model.cuda()
 
     optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.0001)
     loss_fn = nn.MSELoss()
 
-    train_input, train_solutions = load_data_file("data/train/input_pairs.txt")
+    train_input, train_solutions = load_data_file_to_tensor("data/train/input_pairs.txt")
+    test_input, test_solutions = load_data_file_to_tensor("data/test/input_pairs.txt")
 
     print("Starting training.")
     train(10000000)

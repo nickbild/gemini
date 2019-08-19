@@ -3,7 +3,7 @@ import random
 import hashlib
 
 
-num_seqs = 100
+num_seqs = 50
 seq_length = 10
 valid_chars = "0123456789" # string.ascii_lowercase + " ."
 
