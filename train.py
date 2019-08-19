@@ -8,20 +8,25 @@ from lookups import lookup_reverse
 import math
 
 
-num_train_cases = 100
-batch_size = 25 # Divisible by num_train_cases.
-num_batches = int(math.ceil(num_train_cases / batch_size))
+input_seq_length = 10
+output_seq_length = 32
 
-num_test_cases = 50
-batch_size_test = 25 # Divisible by num_train_cases.
-num_batches_test = int(math.ceil(num_test_cases / batch_size_test))
+data_file_train = "data/train/input_pairs.txt"
+num_samples_train = 100
+batch_size_train = 25 # Divisible by num_samples_train.
+num_batches_train = int(math.ceil(num_samples_train / batch_size_train))
+
+data_file_test = "data/test/input_pairs.txt"
+num_samples_test = 50
+batch_size_test = 25 # Divisible by num_samples_test.
+num_batches_test = int(math.ceil(num_samples_test / batch_size_test))
 
 
 class Net(nn.Sequential):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(in_features=10, out_features=512)
+        self.fc1 = nn.Linear(in_features=input_seq_length, out_features=512)
         self.relu1 = nn.LeakyReLU()
 
         self.fc2 = nn.Linear(in_features=512, out_features=1024)
@@ -42,7 +47,7 @@ class Net(nn.Sequential):
         self.fc7 = nn.Linear(in_features=4096, out_features=1024)
         self.relu7 = nn.LeakyReLU()
 
-        self.fc8 = nn.Linear(in_features=1024, out_features=32)
+        self.fc8 = nn.Linear(in_features=1024, out_features=output_seq_length)
 
     def forward(self, input):
         output = self.fc1(input)
@@ -84,7 +89,7 @@ def test():
 
         output = model(input)
 
-        test_acc += calculate_accuracy(output, target)
+        test_acc += count_matches(output, target)
 
     return test_acc
 
@@ -97,9 +102,9 @@ def train(num_epochs):
         train_acc = 0.0
         train_loss = 0.0
 
-        for batch_num in range(1,num_batches+1):
-            range_end = int(batch_num * batch_size) - 1
-            range_start = range_end - batch_size + 1
+        for batch_num in range(1,num_batches_train+1):
+            range_end = int(batch_num * batch_size_train) - 1
+            range_start = range_end - batch_size_train + 1
             range_len = range_end - range_start + 1
 
             input = train_input.narrow(0, range_start, range_len)
@@ -120,25 +125,24 @@ def train(num_epochs):
             # Adjust parameters according to the computed gradients
             optimizer.step()
 
-            train_acc += calculate_accuracy(output, target)
+            train_acc += count_matches(output, target)
             train_loss += loss.cpu().data * input.size(0)
-
-
 
         # Call the learning rate adjustment function
         # adjust_learning_rate(epoch)
 
         # Evaluate on the test set
         test_acc = test()
-        test_acc_pct = (test_acc / (num_test_cases * 32)) * 100
+        test_acc_pct = (test_acc / (num_samples_test * output_seq_length)) * 100
 
-        # Save the model if the test acc is greater than our current best
+        # Save the model if the test accuracy is greater than our current best.
         if test_acc_pct >= best_acc:
+            print("Saving model...")
             torch.save(model.state_dict(), "md5_{}_{}.model".format(epoch, test_acc_pct))
             best_acc = test_acc_pct
 
         # Print metrics for epoch.
-        train_acc_pct = (train_acc / (num_train_cases * 32)) * 100
+        train_acc_pct = (train_acc / (num_samples_train * output_seq_length)) * 100
         print("Epoch: {}, Train Accuracy: {}, Train Loss: {}, Test Accuracy: {}".format(epoch, train_acc_pct, train_loss, test_acc_pct))
 
 
@@ -146,8 +150,6 @@ def encode_string(str):
     result = []
     for chr in str:
         result.append(lookup[chr])
-
-    #result = torch.FloatTensor(result)
 
     return result
 
@@ -164,10 +166,10 @@ def decode_tensor(tensor):
     return result
 
 
-def calculate_accuracy(output, target):
+def count_matches(output, target):
     match = 0
     for r in range(output.shape[0]):
-        for c in range(32):
+        for c in range(output_seq_length):
             if round(output[r][c].item()) == target[r][c].item():
                 match += 1
 
@@ -205,8 +207,8 @@ if __name__ == "__main__":
     optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.0001)
     loss_fn = nn.MSELoss()
 
-    train_input, train_solutions = load_data_file_to_tensor("data/train/input_pairs.txt")
-    test_input, test_solutions = load_data_file_to_tensor("data/test/input_pairs.txt")
+    train_input, train_solutions = load_data_file_to_tensor(data_file_train)
+    test_input, test_solutions = load_data_file_to_tensor(data_file_test)
 
     print("Starting training.")
-    train(10000000)
+    train(100000000)
