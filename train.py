@@ -8,17 +8,17 @@ from lookups import lookup_reverse
 import math
 
 
-input_seq_length = 10
+input_seq_length = 6
 output_seq_length = 32
 
 data_file_train = "data/train/input_pairs.txt"
-num_samples_train = 100
-batch_size_train = 25 # Divisible by num_samples_train.
+num_samples_train = 250000
+batch_size_train = 100 # Divisible by num_samples_train.
 num_batches_train = int(math.ceil(num_samples_train / batch_size_train))
 
 data_file_test = "data/test/input_pairs.txt"
-num_samples_test = 50
-batch_size_test = 25 # Divisible by num_samples_test.
+num_samples_test = 5000
+batch_size_test = 100 # Divisible by num_samples_test.
 num_batches_test = int(math.ceil(num_samples_test / batch_size_test))
 
 
