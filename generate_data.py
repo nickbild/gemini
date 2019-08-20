@@ -3,9 +3,9 @@ import random
 import hashlib
 
 
-num_seqs_train = 100000
-num_seqs_test = 4992
-seq_length = 6
+num_seqs_train = 9984
+num_seqs_test = 16
+seq_length = 4
 valid_chars = "0123456789" # string.ascii_lowercase + " ."
 
 unq = {}

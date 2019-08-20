@@ -8,70 +8,48 @@ from lookups import lookup_reverse
 import math
 
 
-input_seq_length = 6
+save_models = False
+input_seq_length = 4
 output_seq_length = 32
 
 data_file_train = "data/train/input_pairs.txt"
-num_samples_train = 100000
+num_samples_train = 9984
 batch_size_train = 32 # Divisible by num_samples_train.
 num_batches_train = int(math.ceil(num_samples_train / batch_size_train))
 
 data_file_test = "data/test/input_pairs.txt"
-num_samples_test = 4992
-batch_size_test = 32 # Divisible by num_samples_test.
+num_samples_test = 16
+batch_size_test = 16 # Divisible by num_samples_test.
 num_batches_test = int(math.ceil(num_samples_test / batch_size_test))
 
 
-class Net(nn.Sequential):
+class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(in_features=input_seq_length, out_features=512)
-        self.relu1 = nn.LeakyReLU()
+        # Layers
+        self.fc_input_to_128 = nn.Linear(in_features=input_seq_length, out_features=128)
+        self.fc_128_to_128 = nn.Linear(in_features=128, out_features=128)
+        self.fc_128_to_output = nn.Linear(in_features=128, out_features=output_seq_length)
 
-        self.fc2 = nn.Linear(in_features=512, out_features=1024)
-        self.relu2 = nn.LeakyReLU()
+        # Activations
+        self.leaky_relu = nn.LeakyReLU()
 
-        self.fc3 = nn.Linear(in_features=1024, out_features=1024)
-        self.relu3 = nn.LeakyReLU()
-
-        self.fc4 = nn.Linear(in_features=1024, out_features=1024)
-        self.relu4 = nn.LeakyReLU()
-
-        self.fc5 = nn.Linear(in_features=1024, out_features=2048)
-        self.relu5 = nn.LeakyReLU()
-
-        self.fc6 = nn.Linear(in_features=2048, out_features=4096)
-        self.relu6 = nn.LeakyReLU()
-
-        self.fc7 = nn.Linear(in_features=4096, out_features=1024)
-        self.relu7 = nn.LeakyReLU()
-
-        self.fc8 = nn.Linear(in_features=1024, out_features=output_seq_length)
 
     def forward(self, input):
-        output = self.fc1(input)
-        output = self.relu1(output)
+        output = self.fc_input_to_128(input)
+        output = self.leaky_relu(output)
 
-        output = self.fc2(output)
-        output = self.relu2(output)
+        output = self.fc_128_to_128(output)
+        output = self.leaky_relu(output)
 
-        output = self.fc3(output)
-        output = self.relu3(output)
+        output = self.fc_128_to_128(output)
+        output = self.leaky_relu(output)
 
-        output = self.fc4(output)
-        output = self.relu4(output)
+        output = self.fc_128_to_128(output)
+        output = self.leaky_relu(output)
 
-        output = self.fc5(output)
-        output = self.relu5(output)
-
-        output = self.fc6(output)
-        output = self.relu6(output)
-
-        output = self.fc7(output)
-        output = self.relu7(output)
-
-        output = self.fc8(output)
+        output = self.fc_128_to_output(output)
 
         return output
 
@@ -116,6 +94,11 @@ def train(num_epochs):
             # Predict classes using images from the training set.
             output = model(input)
 
+            # print(input)
+            # print(output)
+            # print(target)
+            # print("---")
+
             # Compute the loss based on the predictions and actual labels
             loss = loss_fn(output, target)
 
@@ -136,7 +119,7 @@ def train(num_epochs):
         test_acc_pct = (test_acc / (num_samples_test * output_seq_length)) * 100
 
         # Save the model if the test accuracy is greater than our current best.
-        if test_acc_pct >= best_acc:
+        if test_acc_pct >= best_acc and save_models:
             print("Saving model...")
             torch.save(model.state_dict(), "md5_{}_{}.model".format(epoch, test_acc_pct))
             best_acc = test_acc_pct
@@ -204,8 +187,8 @@ if __name__ == "__main__":
         print("Transferring model to GPU...")
         model.cuda()
 
-    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.0001)
-    loss_fn = nn.MSELoss()
+    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0001)
+    loss_fn = nn.SmoothL1Loss()
 
     train_input, train_solutions = load_data_file_to_tensor(data_file_train)
     test_input, test_solutions = load_data_file_to_tensor(data_file_test)
