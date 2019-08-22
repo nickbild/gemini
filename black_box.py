@@ -3,7 +3,19 @@ import math
 
 
 def square_plus_seventeen(input):
-    return (input ** 2) #+ 17
+    return (input ** 2) + 17
+
+
+def divide_by_four(input):
+    return input / 4
+
+
+def times_pi(input):
+    return input * 3.14159
+
+
+def minus_seven(input):
+    return input - 7
 
 
 def filter(input):
@@ -34,6 +46,10 @@ def main(input):
     output = remove_110s(input, output)
     output = math.floor(output)
     output -= 1
+    output = minus_seven(output)
+    output = divide_by_four(output)
+    output = times_pi(output)
+    output = math.ceil(output)
 
     if output < 0:
         output = 0
