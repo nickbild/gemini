@@ -1,12 +1,16 @@
-import string
 import random
-import hashlib
+import subprocess
+from black_box import main
 
 
-num_seqs_train = 9984
-num_seqs_test = 16
-seq_length = 4
-valid_chars = "0123456789" # string.ascii_lowercase + " ."
+num_seqs_train = 750
+num_seqs_test = 250
+seq_length = 3
+min_in = 0
+max_in = 999
+min_out = 0
+max_out = 998000
+valid_chars = "0123456789"
 
 unq = {}
 
@@ -22,9 +26,18 @@ def write_seqs_to_file(num_seqs, file):
             input_seq += random.choice(valid_chars)
 
         if input_seq not in unq:
+            # Normalize output.
+            input_seq = int(input_seq)
+            input_seq_norm = (input_seq - min_in) / (max_in - min_in)
+
             unq[input_seq] = 1
-            md5hex = hashlib.md5(input_seq.encode('utf-8')).hexdigest()
-            file.write("{}\t{}\n".format(input_seq, md5hex))
+            result = main(input_seq)
+
+            # Normalize result.
+            result = int(result)
+            result_norm = (result - min_out) / (max_out - min_out)
+
+            file.write("{}\t{}\n".format(input_seq_norm, result_norm))
             s += 1
 
 

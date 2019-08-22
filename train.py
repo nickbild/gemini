@@ -3,24 +3,28 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.autograd import Variable
-from lookups import lookup
-from lookups import lookup_reverse
 import math
 
 
-save_models = False
-input_seq_length = 4
-output_seq_length = 32
+save_models = True
+input_seq_length = 1
+output_seq_length = 1
+learning_rate = 0.0001
 
 data_file_train = "data/train/input_pairs.txt"
-num_samples_train = 9984
-batch_size_train = 32 # Divisible by num_samples_train.
+num_samples_train = 750
+batch_size_train = 150 # Divisible by num_samples_train.
 num_batches_train = int(math.ceil(num_samples_train / batch_size_train))
 
 data_file_test = "data/test/input_pairs.txt"
-num_samples_test = 16
-batch_size_test = 16 # Divisible by num_samples_test.
+num_samples_test = 250
+batch_size_test = 50 # Divisible by num_samples_test.
 num_batches_test = int(math.ceil(num_samples_test / batch_size_test))
+
+# Track recent training error values.
+error_history = []
+for i in range(2):
+    error_history.append(0)
 
 
 class Net(nn.Module):
@@ -28,28 +32,49 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         # Layers
-        self.fc_input_to_128 = nn.Linear(in_features=input_seq_length, out_features=128)
-        self.fc_128_to_128 = nn.Linear(in_features=128, out_features=128)
-        self.fc_128_to_output = nn.Linear(in_features=128, out_features=output_seq_length)
+        self.linear_input_to_128 = nn.Linear(in_features=input_seq_length, out_features=128)
+        self.linear_128_to_128 = nn.Linear(in_features=128, out_features=128)
+        self.linear_128_to_256 = nn.Linear(in_features=128, out_features=256)
+        self.linear_256_to_128 = nn.Linear(in_features=256, out_features=128)
+        self.linear_128_to_output = nn.Linear(in_features=128, out_features=output_seq_length)
+
+        self.linear_input_to_64 = nn.Linear(in_features=input_seq_length, out_features=64)
+        self.linear_64_to_128 = nn.Linear(in_features=64, out_features=128)
+        self.linear_128_to_192 = nn.Linear(in_features=128, out_features=192)
+        self.linear_192_to_256 = nn.Linear(in_features=192, out_features=256)
+        self.linear_256_to_128 = nn.Linear(in_features=256, out_features=128)
+        self.linear_128_to_output = nn.Linear(in_features=128, out_features=output_seq_length)
 
         # Activations
         self.leaky_relu = nn.LeakyReLU()
 
 
     def forward(self, input):
-        output = self.fc_input_to_128(input)
+        output = self.linear_input_to_64(input)
         output = self.leaky_relu(output)
 
-        output = self.fc_128_to_128(output)
+        output = self.linear_64_to_128(output)
         output = self.leaky_relu(output)
 
-        output = self.fc_128_to_128(output)
+        output = self.linear_128_to_128(output)
         output = self.leaky_relu(output)
 
-        output = self.fc_128_to_128(output)
+        output = self.linear_128_to_128(output)
         output = self.leaky_relu(output)
 
-        output = self.fc_128_to_output(output)
+        output = self.linear_128_to_128(output)
+        output = self.leaky_relu(output)
+
+        output = self.linear_128_to_192(output)
+        output = self.leaky_relu(output)
+
+        output = self.linear_192_to_256(output)
+        output = self.leaky_relu(output)
+
+        output = self.linear_256_to_128(output)
+        output = self.leaky_relu(output)
+
+        output = self.linear_128_to_output(output)
 
         return output
 
@@ -74,7 +99,7 @@ def test():
 
 def train(num_epochs):
     model.train()
-    best_acc = 0.0
+    best_acc = 85.0
 
     for epoch in range(num_epochs):
         train_acc = 0.0
@@ -94,11 +119,6 @@ def train(num_epochs):
             # Predict classes using images from the training set.
             output = model(input)
 
-            # print(input)
-            # print(output)
-            # print(target)
-            # print("---")
-
             # Compute the loss based on the predictions and actual labels
             loss = loss_fn(output, target)
 
@@ -111,50 +131,47 @@ def train(num_epochs):
             train_acc += count_matches(output, target)
             train_loss += loss.cpu().data * input.size(0)
 
-        # Call the learning rate adjustment function
-        # adjust_learning_rate(epoch)
+        error_history.append(train_loss.item())
+        error_history.pop(0)
+
+        loss_reduction = adjust_learning_rate(learning_rate, error_history)
 
         # Evaluate on the test set
         test_acc = test()
-        test_acc_pct = (test_acc / (num_samples_test * output_seq_length)) * 100
+        test_acc_pct = (test_acc / num_samples_test) * 100
 
         # Save the model if the test accuracy is greater than our current best.
-        if test_acc_pct >= best_acc and save_models:
+        if test_acc_pct > best_acc and save_models:
             print("Saving model...")
-            torch.save(model.state_dict(), "md5_{}_{}.model".format(epoch, test_acc_pct))
+            torch.save(model.state_dict(), "gemini_{}_{}.model".format(epoch, test_acc_pct))
             best_acc = test_acc_pct
 
         # Print metrics for epoch.
-        train_acc_pct = (train_acc / (num_samples_train * output_seq_length)) * 100
-        print("Epoch: {}, Train Accuracy: {}, Train Loss: {}, Test Accuracy: {}".format(epoch, train_acc_pct, train_loss, test_acc_pct))
+        train_acc_pct = (train_acc / num_samples_train) * 100
+        print("Epoch: {},\tTrain Accuracy: {},\tTrain Loss: {},\tLoss Reduction: {},\tTest Accuracy: {}".format(epoch, round(train_acc_pct, 3), round(train_loss.item(), 1), round(loss_reduction,3), round(test_acc_pct, 3)))
 
 
-def encode_string(str):
-    result = []
-    for chr in str:
-        result.append(lookup[chr])
+def adjust_learning_rate(rate, error_history):
+    mean1 = error_history[0]
+    mean2 = error_history[1]
+    reduction = mean1 - mean2
 
-    return result
+    if reduction < 0:
+        rate = rate / 100
+    elif reduction < 1000:
+        rate = rate / 10
 
+    for param_group in optimizer.param_groups:
+        param_group["lr"] = rate
 
-def decode_tensor(tensor):
-    result = ""
-    for t in tensor:
-        for chr in t.tolist():
-            try:
-                result += lookup_reverse[round(chr)]
-            except KeyError as e:
-                result += " "
-
-    return result
+    return reduction
 
 
 def count_matches(output, target):
     match = 0
     for r in range(output.shape[0]):
-        for c in range(output_seq_length):
-            if round(output[r][c].item()) == target[r][c].item():
-                match += 1
+        if round(output[r].item()) == round(target[r].item()):
+            match += 1
 
     return match
 
@@ -164,11 +181,11 @@ def load_data_file_to_tensor(file):
     output = []
     for line in open(file):
         line = line.rstrip('\n')
-        input.append(encode_string(line.split("\t")[0]))
-        output.append(encode_string(line.split("\t")[1]))
+        input.append(float(line.split("\t")[0]))
+        output.append(float(line.split("\t")[1]))
 
-    input = torch.FloatTensor(input)
-    output = torch.FloatTensor(output)
+    input = torch.FloatTensor(input).view(-1,1)
+    output = torch.FloatTensor(output).view(-1,1)
 
     if cuda_avail:
         print("Transferring data to GPU...")
@@ -187,11 +204,11 @@ if __name__ == "__main__":
         print("Transferring model to GPU...")
         model.cuda()
 
-    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0001)
+    optimizer = Adam(model.parameters(), lr=learning_rate, weight_decay=0)
     loss_fn = nn.SmoothL1Loss()
 
     train_input, train_solutions = load_data_file_to_tensor(data_file_train)
     test_input, test_solutions = load_data_file_to_tensor(data_file_test)
 
     print("Starting training.")
-    train(100000000)
+    train(100000000000)
