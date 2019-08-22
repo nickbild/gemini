@@ -12,12 +12,12 @@ output_seq_length = 1
 learning_rate = 0.0001
 
 data_file_train = "data/train/input_pairs.txt"
-num_samples_train = 750
-batch_size_train = 150 # Divisible by num_samples_train.
+num_samples_train = 250
+batch_size_train = 50 # Divisible by num_samples_train.
 num_batches_train = int(math.ceil(num_samples_train / batch_size_train))
 
 data_file_test = "data/test/input_pairs.txt"
-num_samples_test = 250
+num_samples_test = 750
 batch_size_test = 50 # Divisible by num_samples_test.
 num_batches_test = int(math.ceil(num_samples_test / batch_size_test))
 
@@ -32,12 +32,6 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         # Layers
-        self.linear_input_to_128 = nn.Linear(in_features=input_seq_length, out_features=128)
-        self.linear_128_to_128 = nn.Linear(in_features=128, out_features=128)
-        self.linear_128_to_256 = nn.Linear(in_features=128, out_features=256)
-        self.linear_256_to_128 = nn.Linear(in_features=256, out_features=128)
-        self.linear_128_to_output = nn.Linear(in_features=128, out_features=output_seq_length)
-
         self.linear_input_to_64 = nn.Linear(in_features=input_seq_length, out_features=64)
         self.linear_64_to_128 = nn.Linear(in_features=64, out_features=128)
         self.linear_128_to_192 = nn.Linear(in_features=128, out_features=192)
@@ -152,6 +146,7 @@ def train(num_epochs):
 
 
 def adjust_learning_rate(rate, error_history):
+    # Adapt learning rate based on rate of error change.
     mean1 = error_history[0]
     mean2 = error_history[1]
     reduction = mean1 - mean2
