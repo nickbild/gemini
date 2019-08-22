@@ -3,13 +3,13 @@ import subprocess
 from black_box import main
 
 
-num_seqs_train = 750
-num_seqs_test = 250
+num_seqs_train = 250
+num_seqs_test = 750
 seq_length = 3
 min_in = 0
 max_in = 999
 min_out = 0
-max_out = 998000
+max_out = 783835
 valid_chars = "0123456789"
 
 unq = {}
