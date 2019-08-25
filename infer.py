@@ -1,8 +1,6 @@
 import sys
 import torch
 from train import Net
-from lookups import lookup
-from lookups import lookup_reverse
 
 
 # Load the saved model.
