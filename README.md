@@ -1,6 +1,6 @@
 # Project Gemini
 
-Project Gemini demonstrates a method to create a functionally identical copy of software using deep learning.
+Project Gemini demonstrates a method to create a functionally identical copy of software using deep learning.  The software to be copied is not needed; only prior input/output data is required.
 
 The copy operates exactly like the original software, but uses none of the original source code or proprietary algorithms.  It is de novo self-programmed software.
 
