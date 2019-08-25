@@ -4,6 +4,8 @@ Project Gemini demonstrates a method to create a functionally identical copy of 
 
 The copy operates exactly like the original software, but uses none of the original source code or proprietary algorithms.  It is de novo self-programmed software.
 
+See a working example [here](https://github.com/nickbild/gemini#inference).
+
 ## Overview
 
 I have constructed a deep feed-forward neural network that can be trained on an input/output data set from an existing application.  The training process generates a model that recreates the function of, but is implemented in a completely different way than, the original software.
@@ -63,8 +65,6 @@ localhost:gemini nickbild$ python3 black_box.py 60300
 localhost:gemini nickbild$ python3 infer.py 60300
 94727
 ```
-
-## Media
 
 See it in action:
 [YouTube](https://www.youtube.com/watch?v=kNbbeXuxwkA)
