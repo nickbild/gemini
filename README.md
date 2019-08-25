@@ -51,7 +51,7 @@ python3 train.py
 
 ## Inference
 
-The trained model is used in [infer.py](https://github.com/nickbild/gemini/blob/master/infer.py) to reproduce the function of the original software.  In the following example, the original software (`black_box.py`) is first shown being supplied with an input and generating an output.  Next, the neural network model is shown accepting the same input and producing the same output.
+The trained model is used in [infer.py](https://github.com/nickbild/gemini/blob/master/infer.py) to reproduce the function of the original software.  In the following example, the original software (`black_box.py`) is first shown being supplied with an input and generating an output.  Next, the neural network model (`infer.py`) is shown accepting the same input and producing the same output.
 
 ```bash
 localhost:gemini nickbild$ python3 black_box.py 60300
