@@ -16,15 +16,15 @@ See a working example [here](https://github.com/nickbild/gemini#inference).
 
 I have constructed a deep feed-forward neural network that can be trained on an input/output data set from an existing application.  The training process generates a model that recreates the function of, but is implemented in a completely different way than, the original software.
 
-### Scope
-
-The current implementation will work to recreate deterministic applications (i.e. some set of inputs generates a set of outputs repeatably).  The current method would not work for applications with stochastic elements, or if the outputs are dependent on additional sources of state (e.g. saved data on a disk, a hardware timer, etc.).  I think some of these limitations could be overcome with additional research and data sources (e.g. reading disk and memory data into the model), but was not the initial goal of this project, and may be computationally infeasible for a few more years.
-
 ### Uses
 
 This method can be used if the original software has been lost, but prior data exists.  A functional copy of the missing software can be created from the data alone.
 
 It hasn't escaped my notice that this method could also be used to clone proprietary software in an effort to circumvent restrictions in the software license, or avoid paying the original developer.  I don't know the legality of doing this, but it does not seem ethical, and I do not endorse using the method for such a purpose.
+
+### Scope
+
+The current implementation will work to recreate deterministic applications (i.e. some set of inputs generates a set of outputs repeatably).  The current method would not work for applications with stochastic elements, or if the outputs are dependent on additional sources of state (e.g. saved data on a disk, a hardware timer, etc.).  I think some of these limitations could be overcome with additional research and data sources (e.g. reading disk and memory data into the model), but was not the initial goal of this project, and may be computationally infeasible for a few more years.
 
 ## Training
 
