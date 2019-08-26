@@ -24,7 +24,7 @@ The current implementation will work to recreate deterministic applications (i.e
 
 This method can be used if the original software has been lost, but prior data exists.  A functional copy of the missing software can be created from the data alone.
 
-It hasn't escaped my notice that this method could also be used to clone proprietary software in an effort to circumvent restrictions in the software license, or avoid paying the original developer.  I don't know the legality of doing this, but it does not seem ethical, and I do not recommend using the method for such a purpose.
+It hasn't escaped my notice that this method could also be used to clone proprietary software in an effort to circumvent restrictions in the software license, or avoid paying the original developer.  I don't know the legality of doing this, but it does not seem ethical, and I do not endorse using the method for such a purpose.
 
 ## Training
 
