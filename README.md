@@ -12,6 +12,10 @@ See a working example [here](https://github.com/nickbild/gemini#inference).
 
 I have constructed a deep feed-forward neural network that can be trained on an input/output data set from an existing application.  The training process generates a model that recreates the function of, but is implemented in a completely different way than, the original software.
 
+![Overview](https://raw.githubusercontent.com/nickbild/gemini/master/media/gemini_overview.jpg)
+
+### Scope
+
 The current implementation will work to recreate deterministic applications (i.e. some set of inputs generates a set of outputs).  The current method would not work for applications with stochastic elements, or if the outputs are dependent on additional sources of state (e.g. saved data on a disk, a hardware timer, etc.).  I think some of these limitations could be overcome with additional research and data sources (e.g. reading disk and memory data into the model), but was not the initial goal of this project, and may be computationally infeasible for a few more years.
 
 ### Uses
