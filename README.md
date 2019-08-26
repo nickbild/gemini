@@ -40,7 +40,7 @@ The model was implemented in PyTorch ([train.py](https://github.com/nickbild/gem
 
 The training had a tendency to get "stuck" on local minima while trying to learn the non-linear aspects of the original software and required lots of fiddling with the learning rate.  I tried various adaptive scheduling mechanisms to overcome the problem, but due to the stochastic nature of the initial conditions and parameter updates, nothing made the corrections at the right times.  To solve the problem, I used Human-Assisted Learning Rate Adjustment (yes, I just made that up).
 
-The algorithm would read the desired learning rate from a text file every 100 epochs, allowing me to update it as needed.  It was very hands on, but it worked well.  It allowed me to "rock" the rate back and forth a bit to find better parameters and push the training error down -- somewhat analogous to rocking a car stuck in snow to break free.
+The algorithm would read the desired learning rate from a text file every 100 epochs, allowing me to update it as needed.  It was very hands on, but it worked well.  It allowed me to "rock" the learning rate back and forth a bit to find better parameters and push the training error down -- somewhat analogous to rocking a car stuck in snow to break free.
 
 ### AWS
 
