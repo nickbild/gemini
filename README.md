@@ -10,11 +10,11 @@ See a working example [here](https://github.com/nickbild/gemini#inference).
 
 ## Overview
 
-I have constructed a deep feed-forward neural network that can be trained on an input/output data set from an existing application.  The training process generates a model that recreates the function of, but is implemented in a completely different way than, the original software.
-
 <p align="center">
 <img src="https://raw.githubusercontent.com/nickbild/gemini/master/media/gemini_overview.jpg">
 </p>
+
+I have constructed a deep feed-forward neural network that can be trained on an input/output data set from an existing application.  The training process generates a model that recreates the function of, but is implemented in a completely different way than, the original software.
 
 ### Scope
 
