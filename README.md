@@ -1,3 +1,5 @@
+![Gemini Project](https://raw.githubusercontent.com/nickbild/gemini/master/media/logo.jpg)
+
 # Gemini Project
 
 Gemini Project demonstrates a method to create a functionally identical copy of software using deep learning.  The software to be copied is not needed; only prior input/output data is required.
