@@ -28,7 +28,7 @@ It hasn't escaped my notice that this method could also be used to clone proprie
 
 ## Training
 
-I trained an eight layer feed-forward neural network.  Understanding that a user of the software may not have a vast amount of I/O data from the original software available, I trained on a very modest data set of only 500 inputs.
+I trained an eight layer feed-forward neural network.  Understanding that a user of the software may not have a vast amount of I/O data from the original software available, I trained on a very modest data set of only 500 inputs.  For more complex applications, I anticipate a significantly larger data set would be needed.
 
 ### Original Software
 
